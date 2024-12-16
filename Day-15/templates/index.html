@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data-Driven Web Application</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+  <h1>Data Visualizations</h1>
+  <div>
+    <label for="year">Select Year:</label>
+    <select id="year" name="year" onchange="filterData()">
+      <option value="All">All Years</option>
+      {% for decade, years_in_decade in years.items() %}
+      <optgroup label="{{ decade }}">
+        {% for year in years_in_decade %}
+        <option value="{{ year }}">{{ year }}</option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <h2>Net Worth by Age</h2>
+    <div id="scatter-container">{{ scatter_html|safe }}</div>
+  </div>
+  <div>
+    <h2>Net Worth by Year</h2>
+    <div id="line-container">{{ line_html|safe }}</div>
+  </div>
+
+
+
+  <script>
+    function filterData() {
+      var year = document.getElementById('year').value;
+      console.log("Selected year:", year);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/filter?year=' + year, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          console.log("Response received:", xhr.responseText);
+          var response = JSON.parse(xhr.responseText);
+          console.log("Parsed response:", response);
+
+          var scatterData = JSON.parse(response.scatter_json);
+          var lineData = JSON.parse(response.line_json);
+
+          Plotly.newPlot('scatter-container', scatterData.data, scatterData.layout);
+          Plotly.newPlot('line-container', lineData.data, lineData.layout);
+        } else if (xhr.readyState == 4 && xhr.status !== 200) {
+          console.log("Error occurred:", xhr.status, xhr.statusText);
+        }
+      };
+      xhr.send();
+    }
+  </script>
+</body>
+
+</html>
